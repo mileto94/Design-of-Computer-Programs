@@ -93,57 +93,54 @@ def two_pair(ranks):
 def best_hand(hand):
     return max(itertools.combinations(hand, 5), key=hand_rank)
 
-
+# my solution
 def best_wild_hand(hand):
     """Try all values for jokers in all 5-card selections."""
-    print('***************************************************')
-    print(hand)
     joker = filter(lambda card: '?' in card, hand)
     left = filter(lambda card: '?' not in card, hand)
-    if joker:
-        hand = left
-        # joker = joker_card[0]
-        # hand.remove(joker_card)
+
+    # get combinations of wild cards when they are more
+    new_cards = []
+    for joker_card in joker:
         ranks = 'AKQJT98765432'
         suits = {
             'B': 'CS',
             'R': 'HD',
         }
-        new_cards = []
-        for joker_card in joker:
-            new_cards += sorted([
-                t[0] + t[1] for t in itertools.product(ranks, suits[joker_card[1]])],
-                reverse=True)
-        print(new_cards)
-        # print(hand)
-        rank = hand_rank(best_hand(hand))
-        # print(rank)
-        all_cards = [list(i) for i in itertools.combinations(new_cards, len(joker))]
-        for card in new_cards:
-            # print('---------------------------------------')
-            # print(card)
-            # print('---------------------------------------')
-            if card in hand:
-                pass
-            if len(joker) < 2:
-                new_hand = list(itertools.chain(hand, [card]))
-            else:
-                new_hand = list(itertools.chain(hand, all_cards))
-            print(new_hand)
-            new_hand_rank = hand_rank(best_hand(new_hand))
-            # print(new_hand_rank)
-            # print('new', new_hand_rank[0])
-            # print('old', rank[0])
-            # print(new_hand_rank)
-            # print(rank)
-            if new_hand_rank[0] >= rank[0]:
-                # print(new_hand_rank[1])
-                # print(rank[1])
-                if(type(new_hand_rank[1]) is list and new_hand_rank[1][0] > rank[1] or
-                   new_hand_rank[1] > rank[1]):
-                    # print('choice', best_hand(new_hand), new_hand_rank)
-                    return best_hand(new_hand)
-    return best_hand(hand)
+        ranks = ranks[:ranks.index(left[-1][0]) + 1]
+        new_cards.append([
+            t[0] + t[1] for t in itertools.product(ranks, suits[joker_card[1]])])
+
+    if joker:
+        all_cards = [list(i) for i in itertools.product(*new_cards)]
+        result = []
+        for card_set in all_cards:
+            if len(filter(lambda x: x not in left, card_set)) == len(joker):
+                new_hand = list(itertools.chain(left, card_set))
+                result.append(best_hand(new_hand))
+        return max(result, key=hand_rank)
+    return best_hand(left)
+
+
+# teacher's solution
+allranks = '23456789TJQKA'
+cards = {
+    '?B': [r + s for r in allranks for s in 'SC'],
+    '?R': [r + s for r in allranks for s in 'DH']
+}
+
+
+def best_wild_hand_teacher(hand):
+    hands = set(
+        best_hand(h) for h in itertools.product(*map(replacements, hand)))
+    return max(hands, key=hand_rank)
+
+
+def replacements(card):
+    """Return list of all possible replacements for a card."""
+    if card in cards:
+        return cards[card]
+    return [card]
 
 
 def test_best_wild_hand():
